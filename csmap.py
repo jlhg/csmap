@@ -11,25 +11,25 @@ class WigData:
         self.file = fileobj
         # self.chrom = None
         self.starts = []
-        self.stop = {}
-        self.offset = {}
+        self.start_offset = {}
+        self.stop_offset = {}
 
-    def set_offset(self, start, stop, offset):
+    def set_offset(self, start, start_offset, stop_offset):
         self.starts.append(start)
-        self.stop.update({start: stop})
-        self.offset.update({start: offset})
+        self.start_offset.update({start: start_offset})
+        self.stop_offset.update({start: stop_offset})
 
     def map(self, start, end):
         i = bisect.bisect(self.starts, start)
         if i == 0:
             return None         # No data
-        elif end > self.stop.get(self.starts[i - 1]):
+        elif (end - start + 1) * 6 > self.stop_offset.get(self.starts[i - 1]):
             return None         # Stop is out of range
         else:
             return self.get_scores(start, end)
 
     def get_scores(self, start, end):
-        self.file.seek(self.offset.get(start))
+        self.file.seek(self.start_offset.get(start))
         return self.file.read((end - start + 1) * 6 - 1).split(b'\n')
 
 
@@ -40,7 +40,11 @@ class WigLister:
 
         header = re.compile(b'# (.+) chrom=(.+)')
 
-        tar_file = tarfile.open(filename, 'r:gz')
+        if tarfile.is_tarfile(filename):
+            tar_file = tarfile.open(filename, 'r:gz')
+        else:
+            sys.exit('File ' + filename + ' is not a tar file.')
+
         for line in tar_file.extractfile('index'):
             if header.match(line):
                 wig_filename = header.match(line).group(1)
