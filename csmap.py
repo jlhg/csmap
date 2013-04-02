@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import re
 import sys
@@ -9,28 +9,30 @@ import tarfile
 class WigData:
     def __init__(self, fileobj):
         self.file = fileobj
-        # self.chrom = None
         self.starts = []
         self.start_offset = {}
-        self.stop_offset = {}
+        self.max_offset = {}
 
-    def set_offset(self, start, start_offset, stop_offset):
+    def set_offset(self, start, start_offset, max_offset):
         self.starts.append(start)
         self.start_offset.update({start: start_offset})
-        self.stop_offset.update({start: stop_offset})
+        self.max_offset.update({start: max_offset})
 
     def map(self, start, end):
-        i = bisect.bisect(self.starts, start)
+        i = bisect.bisect_right(self.starts, int(start))
+
         if i == 0:
             return None         # No data
-        elif (end - start + 1) * 6 > self.stop_offset.get(self.starts[i - 1]):
+        elif (end - start + 1) * 6 > self.max_offset.get(self.starts[i - 1]):
             return None         # Stop is out of range
         else:
-            return self.get_scores(start, end)
+            start_offset = self.start_offset[self.starts[i - 1]] + (start - self.starts[i - 1]) * 6
+            offset = (end - start + 1) * 6 - 1
+            return self.get_scores(start_offset, offset)
 
-    def get_scores(self, start, end):
-        self.file.seek(self.start_offset.get(start))
-        return self.file.read((end - start + 1) * 6 - 1).split(b'\n')
+    def get_scores(self, start_offset, offset):
+        self.file.seek(start_offset)
+        return list(map(float, self.file.read(offset).split(b'\n')))
 
 
 class WigLister:
@@ -38,23 +40,22 @@ class WigLister:
         self.wig_data_list = {}
         self.chroms = []
 
-        header = re.compile(b'# (.+) chrom=(.+)')
+        header = re.compile(b'# (.+)')
 
         if tarfile.is_tarfile(filename):
-            tar_file = tarfile.open(filename, 'r:gz')
+            tar_file = tarfile.open(filename, 'r:bz2')
         else:
             sys.exit('File ' + filename + ' is not a tar file.')
 
         for line in tar_file.extractfile('index'):
             if header.match(line):
-                wig_filename = header.match(line).group(1)
-                chrom = header.match(line).group(2)
+                chrom = header.match(line).group(1).decode('UTF-8')
                 self.chroms.append(chrom)
-                wig_data = WigData(tar_file.extractfile(wig_filename))
+                wig_data = WigData(tar_file.extractfile(chrom))
                 self.wig_data_list.update({chrom: wig_data})
             else:
-                data = line.rstrip().split(' ')
-                self.wig_data_list.get(chrom).set_offset(*data)
+                data = line.rstrip().decode('UTF-8').split(' ')
+                self.wig_data_list.get(chrom).set_offset(*map(int, data))
 
     def get_chroms(self):
         return self.chroms
@@ -68,41 +69,13 @@ def main(argvs):
     if len(argvs) != 3:
         sys.exit('Usage: csmap.py <input.fa> <scores.tar.gz> <output.txt>')
 
-    # Parse tar file
-    # wig_format = re.compile(b'fixedStep chrom=(.+) start=(\d+) step=(\d+)')
-    # wig_index_format = re.compile(b'chrom=(.+)')
-
+    # Parsing score files
+    print('Parsing score files...')
     score_data = WigLister(argvs[1])
-    # score_data = WigLister(tarfile.open(argvs[1], 'r:gz'))
 
-    # members = score_tarfile.getmembers()
-
-    # chr_score_files = {}
-    # chr_starts = {}
-    # chr_steps = {}
-    # chr_offset = {}
-
-    # score_files =
-
-    # for member in members:
-    #     score_file = score_tarfile.extractfile(member.name)
-    #     header = score_file.readline()
-
-    #     if wig_format.match(header):
-    #         chr_score_files.update({chr_name: WigContent(wig_format.match(header), score_file)})
-    #     elif wig_index_format.match(header):
-    #         chr_score_
-
-    #     if header is None:
-    #         sys.exit('Format error in the score file, please check it.')
-
-    #     chr_name = header.group(1).decode('UTF-8')
-    #     chr_score_files.update({chr_name: score_file})
-    #     chr_starts.update({chr_name: int(header.group(2).decode('UTF-8'))})
-    #     chr_steps.update({chr_name: int(header.group(3).decode('UTF-8'))})
-    #     chr_offset.update({chr_name: score_file.tell()})
-
-    # Start mapping
+    # Start to map
+    print('OK!')
+    print('Start to map...')
     fa_header = re.compile('.+range=(.+):(\d+)-(\d+)\s.+')
 
     with open(argvs[0], 'r') as fi, open(argvs[2], 'w') as fo:
@@ -124,13 +97,6 @@ def main(argvs):
 
                 scores = score_data.map(chr_name, chr_start, chr_end)
 
-                # if chr_start < chr_starts.get(chr_name):
-                #     print('No score data ' + seq_name)
-                #     continue
-
-                # chr_score_files.get(chr_name).seek(chr_offset.get(chr_name) + (chr_start - 1) * 6)
-                # scores = map(float, chr_score_files.get(chr_name).read((chr_end - chr_start + 1) * 6 - 1).split(b'\n'))
-
                 if scores is None:
                     print('No score data is found: ' + seq_name)
                 else:
@@ -141,3 +107,4 @@ def main(argvs):
 
 if __name__ == '__main__':
     main(sys.argv[1:])
+    print('Successfully executed!')
