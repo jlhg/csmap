@@ -4,6 +4,8 @@ import re
 import sys
 import bisect
 import tarfile
+import mmap
+import contextlib
 
 
 class WigData:
@@ -49,12 +51,12 @@ class WigLister:
 
         for line in tar_file.extractfile('index'):
             if header.match(line):
-                chrom = header.match(line).group(1).decode('UTF-8')
+                chrom = header.match(line).group(1).decode('utf-8')
                 self.chroms.append(chrom)
                 wig_data = WigData(tar_file.extractfile(chrom))
                 self.wig_data_list.update({chrom: wig_data})
             else:
-                data = line.rstrip().decode('UTF-8').split(' ')
+                data = line.rstrip().decode('utf-8').split(' ')
                 self.wig_data_list.get(chrom).set_offset(*map(int, data))
 
     def get_chroms(self):
@@ -78,10 +80,17 @@ def main(argvs):
     print('Start to map...')
     fa_header = re.compile('.+range=(.+):(\d+)-(\d+)\s.+')
 
-    with open(argvs[0], 'r') as fi, open(argvs[2], 'w') as fo:
-        for line in fi:
-            if line.lstrip()[0] == '>':
-                header = fa_header.match(line.lstrip())
+    with open(argvs[0], 'r+') as fi, open(argvs[2], 'w') as fo:
+        with contextlib.closing(mmap.mmap(fi.fileno(), 0)) as m:
+
+            while True:
+                offset = m.find('>')
+
+                if offset == -1:
+                    break
+
+                m.seek(offset)
+                header = fa_header.match(m.readline().lstrip())
 
                 if header is None:
                     sys.exit('Format error in the fasta file, please check it.')

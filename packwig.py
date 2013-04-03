@@ -5,42 +5,39 @@ import re
 import sys
 import tarfile
 import StringIO
+import mmap
+import contextlib
 
 
 def main(argvs):
     # Check arguments
     if len(argvs) < 2:
-        sys.exit('Usage: packwig.py <input1.wig> <input2.wig> ... <output.tar.gz>')
+        sys.exit('Usage: packwig.py <output.tar.bz2> <input1.wig> <input2.wig> ... ')
 
     # Check output filename
-    if not re.match('.*\.tar\.bz2$', argvs[-1]):
-        argvs[-1] = argvs[-1].rstrip('.') + '.tar.bz2'
-        print('Output file: ' + argvs[-1])
+    if not re.match('.*\.tar\.bz2$', argvs[0]):
+        argvs[0] = argvs[0].rstrip('.') + '.tar.bz2'
+        print('Output file: ' + argvs[0])
 
-    output = tarfile.open(argvs[-1], 'w:bz2')
+    output = tarfile.open(argvs[0], 'w:bz2')
     data = StringIO.StringIO()
     wigformat = re.compile('fixedStep chrom=(.+) start=(\d+) step=(\d+)')
 
     # Start to pack files
-    print('Start to pack files...')
-    for f in argvs[0:len(argvs) - 1]:
-        print(f)
+    for f in argvs[1:]:
+        print('Indexing file ' + f + '...')
 
-        with open(f, 'r') as fi:
-            chrom = None
-            start = None
-            start_offset = None
-            stop_offset = None
+        with open(f, 'r+') as fi:
+            with contextlib.closing(mmap.mmap(fi.fileno(), 0)) as m:
+                stop_offset = m.find('fixedStep')
+                chrom = None
+                start = None
+                start_offset = None
 
-            while True:
-                line = fi.readline()
+                while stop_offset != -1:
+                    m.seek(stop_offset)
+                    header = wigformat.match(m.readline())
 
-                if len(line) == 0:
-                    break
-
-                if line.lstrip()[0] == 'f':
-
-                    header = wigformat.match(line)
                     if header is None:
                         sys.exit('Error format.')
 
@@ -52,15 +49,18 @@ def main(argvs):
                     chrom = header.group(1)
                     start = int(header.group(2))
                     step = int(header.group(3))
-                    start_offset = fi.tell()
 
                     if step != 1:
                         sys.exit('Not implement for step > 1. Please contact author if you need.')
-                else:
-                    stop_offset = fi.tell()
 
-            data.write(' '.join([str(start), str(start_offset), str(stop_offset - start_offset)]) + '\n')
+                    start_offset = m.tell()
+                    stop_offset = m.find('fixedStep')
 
+                m.seek(0, os.SEEK_END)
+                data.write(' '.join([str(start), str(start_offset), str(m.tell() - start_offset)]) + '\n')
+
+        print('Indexed!')
+        print('Compressing...')
         output.add(f, arcname=chrom)
         print('OK.')
 
