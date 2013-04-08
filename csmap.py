@@ -3,10 +3,10 @@
 # csmap - Conservation score mapper
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.0
+# Version: 1.1
 # Created: 2013.4.1
 #
-# Usage: csmap <input.fa> <scores.tar.bz2> <output.txt>
+# Usage: csmap <input.fa> <scores.tar> <output.txt>
 
 import re
 import sys
@@ -53,7 +53,7 @@ class WigLister:
         header = re.compile(b'# (.+)')
 
         if tarfile.is_tarfile(filename):
-            tar_file = tarfile.open(filename, 'r:bz2')
+            tar_file = tarfile.open(filename, 'r')
         else:
             sys.exit('File ' + filename + ' is not a tar file.')
 
@@ -80,7 +80,7 @@ def main(argvs):
         sys.exit('Usage: csmap <input.fa> <scores.tar.bz2> <output.txt>')
 
     # Parsing score files
-    print('Uncompressing score files...')
+    print('Unpacking score files...')
     score_data = WigLister(argvs[1])
 
     # Start to map

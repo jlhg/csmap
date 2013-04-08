@@ -3,13 +3,13 @@
 # packwig - Pack and compress score files
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.0
+# Version: 1.1
 # Created: 2013.4.1
 #
 # Requirements:
 # * Python 2.7
 #
-# Usage: packwig <output.tar.bz2> <input1.wig> <input2.wig> ...
+# Usage: packwig <output.tar> <input1.wig> <input2.wig> ...
 
 import os
 import re
@@ -23,7 +23,7 @@ import contextlib
 def main(argvs):
     # Check arguments
     if len(argvs) < 2:
-        sys.exit('Usage: packwig <output.tar.bz2> <input1.wig> <input2.wig> ... ')
+        sys.exit('Usage: packwig <output.tar> <input1.wig> <input2.wig> ... ')
 
     # Check version
     if '2.7' not in sys.version:
@@ -31,11 +31,11 @@ def main(argvs):
         sys.exit()
 
     # Check output filename
-    if not re.match('.*\.tar\.bz2$', argvs[0]):
-        argvs[0] = argvs[0].rstrip('.') + '.tar.bz2'
+    if not re.match('.*\.tar$', argvs[0]):
+        argvs[0] = argvs[0].rstrip('.') + '.tar'
         print('Output file: ' + argvs[0])
 
-    output = tarfile.open(argvs[0], 'w:bz2')
+    output = tarfile.open(argvs[0], 'w')
     data = StringIO.StringIO()
     wigformat = re.compile('fixedStep chrom=(.+) start=(\d+) step=(\d+)')
 
@@ -76,7 +76,7 @@ def main(argvs):
                 data.write(' '.join([str(start), str(start_offset), str(m.tell() - start_offset)]) + '\n')
 
         print('Indexed!')
-        print('Compressing...')
+        print('Packing file...')
         output.add(f, arcname=chrom)
         print('OK.')
 
