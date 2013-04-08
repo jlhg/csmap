@@ -77,7 +77,7 @@ class WigLister:
 def main(argvs):
     # Check arguments
     if len(argvs) != 3:
-        sys.exit('Usage: csmap <input.fa> <scores.tar.bz2> <output.txt>')
+        sys.exit('Usage: csmap <input.fa> <scores.tar> <output.txt>')
 
     # Parsing score files
     print('Unpacking score files...')
