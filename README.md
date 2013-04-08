@@ -8,7 +8,7 @@ Firstly, you need to index and pack score files:
 
     $ packwig scores chr2L.wig chr2R.wig chr3L.wig chr3R.wig chr3.wig chrX.wig
 
-This will generate a tar file named 'scores.tar.bz2'
+This will generate a tar file named 'scores.tar'
 
 If you have more than one score files and want to pack all of them, you can do that:
 
