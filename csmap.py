@@ -72,17 +72,16 @@ def main(argvs):
         sys.exit('Usage: csmap.py <input.fa> <scores.tar.gz> <output.txt>')
 
     # Parsing score files
-    print('Parsing score files...')
+    print('Uncompressing score files...')
     score_data = WigLister(argvs[1])
 
     # Start to map
     print('OK!')
-    print('Start to map...')
+    print('Starting to map...')
     fa_header = re.compile('.+range=(.+):(\d+)-(\d+)\s.+')
 
     with open(argvs[0], 'r+') as fi, open(argvs[2], 'w') as fo:
         with contextlib.closing(mmap.mmap(fi.fileno(), 0)) as m:
-
             while True:
                 offset = m.find('>')
 
@@ -108,11 +107,15 @@ def main(argvs):
 
                 if scores is None:
                     print('No score data is found: ' + seq_name)
+                    continue
                 else:
+                    assert len(scores) == chr_end - chr_start + 1, 'Fetching error!'
+
                     score_avg = sum(scores) / len(scores)
                     fo.write(seq_name + '\t' + str(score_avg) + '\n')
                     fo.write('scores:' + '\n' + '\n'.join(map(str, scores)) + '\n')
                     fo.flush()
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

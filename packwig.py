@@ -67,7 +67,7 @@ def main(argvs):
     newfile = tarfile.TarInfo('index')
     data.seek(0)
     newfile.size = len(data.buf)
-    newfile.mtime = os.path.getmtime(argvs[-1])
+    newfile.mtime = os.path.getmtime(argvs[0])
     output.addfile(newfile, data)
     data.close
     output.close()
