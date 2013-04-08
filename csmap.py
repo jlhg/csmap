@@ -1,4 +1,12 @@
 #!/usr/bin/env python
+#
+# csmap - Conservation score mapper
+#
+# Author: Jian-Long Huang (jianlong@ntu.edu.tw)
+# Version: 1.0
+# Created: 2013.4.1
+#
+# Usage: csmap <input.fa> <scores.tar.bz2> <output.txt>
 
 import re
 import sys
@@ -69,7 +77,7 @@ class WigLister:
 def main(argvs):
     # Check arguments
     if len(argvs) != 3:
-        sys.exit('Usage: csmap.py <input.fa> <scores.tar.gz> <output.txt>')
+        sys.exit('Usage: csmap <input.fa> <scores.tar.bz2> <output.txt>')
 
     # Parsing score files
     print('Uncompressing score files...')
@@ -82,6 +90,8 @@ def main(argvs):
 
     with open(argvs[0], 'r+') as fi, open(argvs[2], 'w') as fo:
         with contextlib.closing(mmap.mmap(fi.fileno(), 0)) as m:
+            fo.write('sequence_name\tavg_conservation_score\n')
+
             while True:
                 offset = m.find('>')
 
@@ -111,9 +121,8 @@ def main(argvs):
                 else:
                     assert len(scores) == chr_end - chr_start + 1, 'Fetching error!'
 
-                    score_avg = sum(scores) / len(scores)
+                    score_avg = round(sum(scores) / len(scores), 3)
                     fo.write(seq_name + '\t' + str(score_avg) + '\n')
-                    fo.write('scores:' + '\n' + '\n'.join(map(str, scores)) + '\n')
                     fo.flush()
 
 

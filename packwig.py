@@ -1,4 +1,15 @@
 #!/usr/bin/env python2.7
+#
+# packwig - Pack and compress score files
+#
+# Author: Jian-Long Huang (jianlong@ntu.edu.tw)
+# Version: 1.0
+# Created: 2013.4.1
+#
+# Requirements:
+# * Python 2.7
+#
+# Usage: packwig <output.tar.bz2> <input1.wig> <input2.wig> ...
 
 import os
 import re
@@ -12,7 +23,12 @@ import contextlib
 def main(argvs):
     # Check arguments
     if len(argvs) < 2:
-        sys.exit('Usage: packwig.py <output.tar.bz2> <input1.wig> <input2.wig> ... ')
+        sys.exit('Usage: packwig <output.tar.bz2> <input1.wig> <input2.wig> ... ')
+
+    # Check version
+    if '2.7' not in sys.version:
+        print('Python 2.7 is needed!')
+        sys.exit()
 
     # Check output filename
     if not re.match('.*\.tar\.bz2$', argvs[0]):
