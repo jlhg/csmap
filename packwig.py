@@ -1,9 +1,9 @@
 #!/usr/bin/env python2.7
 #
-# packwig - Pack and compress score files
+# packwig - Pack score files
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.1
+# Version: 1.2
 # Created: 2013.4.1
 #
 # Requirements:

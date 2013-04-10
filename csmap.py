@@ -3,7 +3,7 @@
 # csmap - Conservation score mapper
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.1
+# Version: 1.2
 # Created: 2013.4.1
 #
 # Usage: csmap <input.fa> <scores.tar> <output.txt>
@@ -17,8 +17,8 @@ import contextlib
 
 
 class WigData:
-    def __init__(self, fileobj):
-        self.file = fileobj
+    def __init__(self, object):
+        self.file = object
         self.starts = []
         self.start_offset = {}
         self.max_offset = {}
@@ -79,7 +79,7 @@ def main(argvs):
     if len(argvs) != 3:
         sys.exit('Usage: csmap <input.fa> <scores.tar> <output.txt>')
 
-    # Parsing score files
+    # Parse score files
     print('Unpacking score files...')
     score_data = WigLister(argvs[1])
 
