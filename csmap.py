@@ -3,7 +3,7 @@
 # csmap - Conservation score mapper
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.2
+# Version: 1.3
 # Created: 2013.4.1
 #
 # Usage: csmap <input.fa> <scores.tar> <output.txt>
@@ -33,7 +33,7 @@ class WigData:
 
         if i == 0:
             return None         # No data
-        elif (end - start + 1) * 6 > self.max_offset.get(self.starts[i - 1]):
+        elif (start - self.starts[i - 1]) * 6 + (end - start + 1) * 6 > self.max_offset.get(self.starts[i - 1]):
             return None         # Stop is out of range
         else:
             start_offset = self.start_offset[self.starts[i - 1]] + (start - self.starts[i - 1]) * 6
