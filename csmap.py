@@ -3,7 +3,7 @@
 # csmap - Conservation score mapper
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.3
+# Version: 1.4
 # Created: 2013.4.1
 #
 # Usage: csmap <input.fa> <scores.tar> <output.txt>
@@ -86,7 +86,7 @@ def main(argvs):
     # Start to map
     print('OK!')
     print('Starting to map...')
-    fa_header = re.compile('.+range=(.+):(\d+)-(\d+)\s.+')
+    fa_header = re.compile('.*range=(.+):(\d+)-(\d+).*')
 
     with open(argvs[0], 'r+') as fi, open(argvs[2], 'w') as fo:
         with contextlib.closing(mmap.mmap(fi.fileno(), 0)) as m:
@@ -104,7 +104,7 @@ def main(argvs):
                 if header is None:
                     sys.exit('Format error in the fasta file, please check it.')
 
-                seq_name = header.group(0)[1:]
+                seq_name = header.group(0).rstrip()[1:]
                 chr_name = header.group(1)
                 chr_start = int(header.group(2))
                 chr_end = int(header.group(3))
