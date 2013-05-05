@@ -81,20 +81,23 @@ def parse(fi, score_filepath):
     """
 
     score_data = WigLister(score_filepath)
-    result = ['\t'.join(['chr_name',
+    result = ['\t'.join(['seqname',
+                         'chrname',
                          'start',
                          'end',
                          'score'])]
     file_lineno = 0
 
     for line in fi:
+        line = line.rstrip()
         file_lineno += 1
 
         try:
             data = line.split()
-            chr_name = data[0]
-            chr_start = int(data[1])
-            chr_end = int(data[2])
+            seq_name = data[0]
+            chr_name = data[1]
+            chr_start = int(data[2])
+            chr_end = int(data[3])
 
         except ValueError:
             return None, file_lineno
@@ -110,17 +113,21 @@ def parse(fi, score_filepath):
                     assert len(scores) == chr_end - chr_start + 1, 'Fetching error!'
 
                     score_avg = round(sum(scores) / len(scores), 3)
-                    result.append('\t'.join([chr_name,
+                    result.append('\t'.join([seq_name,
+                                             chr_name,
                                              str(chr_start),
                                              str(chr_end),
                                              str(score_avg)]))
+
                 else:
-                    result.append('\t'.join([chr_name,
+                    result.append('\t'.join([seq_name,
+                                             chr_name,
                                              str(chr_start),
                                              str(chr_end),
                                              'NA']))
             else:
-                result.append('\t'.join([chr_name,
+                result.append('\t'.join([seq_name,
+                                         chr_name,
                                          str(chr_start),
                                          str(chr_end),
                                          'NA']))
