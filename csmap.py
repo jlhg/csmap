@@ -3,7 +3,7 @@
 # csmap - Conservation score mapper
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.4
+# Version: 1.5
 # Created: 2013.4.1
 #
 # Usage: csmap <input.fa> <scores.tar> <output.txt>
@@ -72,6 +72,60 @@ class WigLister:
 
     def map(self, chrom, start, end):
         return self.wig_data_list.get(chrom).map(start, end)
+
+
+def parse(fi, score_filepath):
+    """
+    Input: file object
+    This function is for web service.
+    """
+
+    score_data = WigLister(score_filepath)
+    result = ['\t'.join(['chr_name',
+                         'start',
+                         'end',
+                         'score'])]
+    file_lineno = 0
+
+    for line in fi:
+        file_lineno += 1
+
+        try:
+            data = line.split()
+            chr_name = data[0]
+            chr_start = int(data[1])
+            chr_end = int(data[2])
+
+        except ValueError:
+            return None, file_lineno
+
+        except IndexError:
+            return None, file_lineno
+
+        else:
+            if chr_name in score_data.get_chroms():
+                scores = score_data.map(chr_name, chr_start, chr_end)
+
+                if scores is not None:
+                    assert len(scores) == chr_end - chr_start + 1, 'Fetching error!'
+
+                    score_avg = round(sum(scores) / len(scores), 3)
+                    result.append('\t'.join([chr_name,
+                                             str(chr_start),
+                                             str(chr_end),
+                                             str(score_avg)]))
+                else:
+                    result.append('\t'.join([chr_name,
+                                             str(chr_start),
+                                             str(chr_end),
+                                             'NA']))
+            else:
+                result.append('\t'.join([chr_name,
+                                         str(chr_start),
+                                         str(chr_end),
+                                         'NA']))
+
+    return '\n'.join(result), file_lineno
 
 
 def main(argvs):
