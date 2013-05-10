@@ -3,7 +3,7 @@
 # csmap - Conservation score mapper
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.6
+# Version: 1.7
 # Created: 2013.4.1
 #
 # Usage: csmap <input.fa> <scores.tar> <output.txt>
@@ -37,7 +37,7 @@ class WigData:
             # Stop is out of range
             if partial is True and (start - self.starts[i - 1]) * 6 < self.max_offset.get(self.starts[i - 1]):
                 start_offset = self.start_offset[self.starts[i - 1]] + (start - self.starts[i - 1]) * 6
-                offset = self.max_offset.get(self.starts[i - 1]) - start_offset - 1
+                offset = self.max_offset.get(self.starts[i - 1]) - (start - self.starts[i - 1]) * 6 - 1
                 return self.get_scores(start_offset, offset)
             else:
                 return None
@@ -116,7 +116,8 @@ def parse(fi, score_filepath, partial=False):
                 scores = score_data.map(chr_name, chr_start, chr_end, partial)
 
                 if scores is not None:
-                    assert len(scores) == chr_end - chr_start + 1, 'Fetching error!'
+                    if partial is False:
+                        assert len(scores) == chr_end - chr_start + 1, 'Fetching error!'
 
                     score_avg = round(sum(scores) / len(scores), 3)
                     result.append('\t'.join([seq_name,
