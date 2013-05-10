@@ -3,7 +3,7 @@
 # csmap - Conservation score mapper
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.7
+# Version: 1.8
 # Created: 2013.4.1
 #
 # Usage: csmap <input.fa> <scores.tar> <output.txt>
@@ -35,10 +35,15 @@ class WigData:
             return None         # No data
         elif (start - self.starts[i - 1]) * 6 + (end - start + 1) * 6 > self.max_offset.get(self.starts[i - 1]):
             # Stop is out of range
-            if partial is True and (start - self.starts[i - 1]) * 6 < self.max_offset.get(self.starts[i - 1]):
-                start_offset = self.start_offset[self.starts[i - 1]] + (start - self.starts[i - 1]) * 6
-                offset = self.max_offset.get(self.starts[i - 1]) - (start - self.starts[i - 1]) * 6 - 1
-                return self.get_scores(start_offset, offset)
+            if partial is True:
+                # Scoring parial sequences
+                if (start - self.starts[i - 1]) * 6 < self.max_offset.get(self.starts[i - 1]):
+                    start_offset = self.start_offset[self.starts[i - 1]] + (start - self.starts[i - 1]) * 6
+                    offset = self.max_offset.get(self.starts[i - 1]) - (start - self.starts[i - 1]) * 6 - 1
+                    return self.get_scores(start_offset, offset)
+                elif end >= self.starts[i]:
+                    start_offset = self.start_offset[self.starts[i]]
+                    offset = (end - self.starts[i] + 1) * 6 - 1
             else:
                 return None
         else:
