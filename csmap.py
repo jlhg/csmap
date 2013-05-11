@@ -44,6 +44,7 @@ class WigData:
                 elif i < len(self.starts) and end >= self.starts[i]:
                     start_offset = self.start_offset[self.starts[i]]
                     offset = (end - self.starts[i] + 1) * 6 - 1
+                    return self.get_scores(start_offset, offset)
             else:
                 return None
         else:
