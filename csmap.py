@@ -3,7 +3,7 @@
 # csmap - Conservation score mapper
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.8
+# Version: 1.9
 # Created: 2013.4.1
 #
 # Usage: csmap <input.fa> <scores.tar> <output.txt>
@@ -32,21 +32,92 @@ class WigData:
         i = bisect.bisect_right(self.starts, int(start))
 
         if i == 0:
-            return None         # No data
-        elif (start - self.starts[i - 1]) * 6 + (end - start + 1) * 6 > self.max_offset.get(self.starts[i - 1]):
-            # Stop is out of range
-            if partial is True:
-                # Scoring parial sequences
-                if (start - self.starts[i - 1]) * 6 < self.max_offset.get(self.starts[i - 1]):
-                    start_offset = self.start_offset[self.starts[i - 1]] + (start - self.starts[i - 1]) * 6
-                    offset = self.max_offset.get(self.starts[i - 1]) - (start - self.starts[i - 1]) * 6 - 1
-                    return self.get_scores(start_offset, offset)
-                elif i < len(self.starts) and end >= self.starts[i]:
-                    start_offset = self.start_offset[self.starts[i]]
-                    offset = (end - self.starts[i] + 1) * 6 - 1
+            # Start is at first position
+            if partial:
+                # Begin to score partial sequences
+                j = bisect.bisect_right(self.starts, int(end))
+                if j == 0:
+                    # End is at first position
+                    return None
+                elif j == 1:
+                    # End is at second position
+                    start_offset = self.start_offset[self.starts[0]]
+                    offset = (end - self.starts[0] + 1) * 6 - 1
                     return self.get_scores(start_offset, offset)
                 else:
-                    return None
+                    # End spans more than one regions
+                    scores = []
+                    for k in range(j):
+                        start_offset = self.start_offset[self.starts[k]]
+                        offset = self.max_offset.get(self.starts[k])
+                        scores = scores + self.get_scores(start_offset, offset)
+                    start_offset = self.start_offset[self.starts[j]]
+                    offset = (end - self.starts[j] + 1) * 6 - 1
+                    return scores + self.get_scores(start_offset, offset)
+            else:
+                # No data
+                return None
+        elif (start - self.starts[i - 1]) * 6 + (end - start + 1) * 6 > self.max_offset.get(self.starts[i - 1]):
+            # Stop is out of range
+            if partial:
+                # Begin to score parial sequences
+                if (start - self.starts[i - 1]) * 6 < self.max_offset.get(self.starts[i - 1]):
+                    # Start is in region
+                    j = bisect.bisect_right(self.starts, int(end))
+                    if j == i:
+                        # End is at the same array order of start.
+                        start_offset = self.start_offset[self.starts[i - 1]] + (start - self.starts[i - 1]) * 6
+                        offset = self.max_offset.get(self.starts[i - 1]) - (start - self.starts[i - 1]) * 6 - 1
+                        return self.get_scores(start_offset, offset)
+                    else:
+                        # End spans more than one regions
+                        scores = []
+                        start_offset = self.start_offset[self.starts[i - 1]] + (start - self.starts[i - 1]) * 6
+                        offset = self.max_offset.get(self.starts[i - 1]) - (start - self.starts[i - 1]) * 6 - 1
+                        scores = scores + self.get_scores(start_offset, offset)
+                        if j - i == 1:
+                            # End is at next position
+                            if self.starts[i] + self.max_offset.get(self.starts[i]) / 6 < end:
+                                start_offset = self.start_offset[self.starts[i]]
+                                offset = self.max_offset.get(self.starts[i]) - 1
+                                return scores + self.get_scores(start_offset, offset)
+                            else:
+                                start_offset = self.start_offset[self.starts[i]]
+                                offset = self.max_offset.get(self.starts[i]) - (end - self.starts[i]) * 6 - 1
+                                return scores + self.get_scores(start_offset, offset)
+                        else:
+                            for k in range(i, j - 1):
+                                start_offset = self.start_offset[self.starts[k]]
+                                offset = self.max_offset.get(self.starts[k]) - 1
+                                scores = scores + self.get_scores(start_offset, offset)
+                            start_offset = self.start_offset[self.starts[j - 1]]
+                            offset = self.max_offset.get(self.starts[j - 1]) - (end - self.starts[j - 1]) * 6 - 1
+                            return scores + self.get_scores(start_offset, offset)
+                else:
+                    # Start is not in region
+                    j = bisect.bisect_right(self.starts, int(end))
+                    if j == i:
+                        # End is not in region
+                        return None
+                    elif j - i == 1:
+                        # End is at next position
+                        if self.starts[i] + self.max_offset.get(self.starts[i]) / 6 < end:
+                            start_offset = self.start_offset[self.starts[i]]
+                            offset = self.max_offset.get(self.starts[i]) - 1
+                            return self.get_scores(start_offset, offset)
+                        else:
+                            start_offset = self.start_offset[self.starts[i]]
+                            offset = self.max_offset.get(self.starts[i]) - (end - self.starts[i]) * 6 - 1
+                            return self.get_scores(start_offset, offset)
+                    else:
+                        scores = []
+                        for k in range(i, j - 1):
+                            start_offset = self.start_offset[self.starts[k]]
+                            offset = self.max_offset.get(self.starts[k]) - 1
+                            scores = scores + self.get_scores(start_offset, offset)
+                        start_offset = self.start_offset[self.starts[j - 1]]
+                        offset = self.max_offset.get(self.starts[j - 1]) - (end - self.starts[j - 1]) * 6 - 1
+                        return scores + self.get_scores(start_offset, offset)
             else:
                 return None
         else:
