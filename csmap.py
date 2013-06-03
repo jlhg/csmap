@@ -3,7 +3,7 @@
 # csmap - Conservation score mapper
 #
 # Author: Jian-Long Huang (jianlong@ntu.edu.tw)
-# Version: 1.9
+# Version: 1.10
 # Created: 2013.4.1
 #
 # Usage: csmap <input.fa> <scores.tar> <output.txt>
@@ -29,6 +29,8 @@ class WigData:
         self.max_offset.update({start: max_offset})
 
     def map(self, start, end, partial=False):
+        assert start < end, 'Start must be lower than end.'
+
         i = bisect.bisect_right(self.starts, int(start))
 
         if i == 0:
@@ -66,6 +68,7 @@ class WigData:
                     j = bisect.bisect_right(self.starts, int(end))
                     if j == i:
                         # End is at the same array order of start.
+                        # tested
                         start_offset = self.start_offset[self.starts[i - 1]] + (start - self.starts[i - 1]) * 6
                         offset = self.max_offset.get(self.starts[i - 1]) - (start - self.starts[i - 1]) * 6 - 1
                         return self.get_scores(start_offset, offset)
@@ -77,13 +80,14 @@ class WigData:
                         scores = scores + self.get_scores(start_offset, offset)
                         if j - i == 1:
                             # End is at next position
+                            # tested
                             if self.starts[i] + self.max_offset.get(self.starts[i]) / 6 < end:
                                 start_offset = self.start_offset[self.starts[i]]
                                 offset = self.max_offset.get(self.starts[i]) - 1
                                 return scores + self.get_scores(start_offset, offset)
                             else:
                                 start_offset = self.start_offset[self.starts[i]]
-                                offset = self.max_offset.get(self.starts[i]) - (end - self.starts[i]) * 6 - 1
+                                offset = (end - self.starts[i] + 1) * 6 - 1
                                 return scores + self.get_scores(start_offset, offset)
                         else:
                             for k in range(i, j - 1):
@@ -91,7 +95,10 @@ class WigData:
                                 offset = self.max_offset.get(self.starts[k]) - 1
                                 scores = scores + self.get_scores(start_offset, offset)
                             start_offset = self.start_offset[self.starts[j - 1]]
-                            offset = self.max_offset.get(self.starts[j - 1]) - (end - self.starts[j - 1]) * 6 - 1
+                            if (end - self.starts[j - 1] + 1) * 6 < self.max_offset.get(self.starts[j - 1]):
+                                offset = (end - self.starts[j - 1] + 1) * 6 - 1
+                            else:
+                                offset = self.max_offset.get(self.starts[j - 1])
                             return scores + self.get_scores(start_offset, offset)
                 else:
                     # Start is not in region
@@ -107,7 +114,7 @@ class WigData:
                             return self.get_scores(start_offset, offset)
                         else:
                             start_offset = self.start_offset[self.starts[i]]
-                            offset = self.max_offset.get(self.starts[i]) - (end - self.starts[i]) * 6 - 1
+                            offset = (end - self.starts[i] + 1) * 6 - 1
                             return self.get_scores(start_offset, offset)
                     else:
                         scores = []
@@ -116,7 +123,10 @@ class WigData:
                             offset = self.max_offset.get(self.starts[k]) - 1
                             scores = scores + self.get_scores(start_offset, offset)
                         start_offset = self.start_offset[self.starts[j - 1]]
-                        offset = self.max_offset.get(self.starts[j - 1]) - (end - self.starts[j - 1]) * 6 - 1
+                        if (end - self.starts[j - 1] + 1) * 6 < self.max_offset.get(self.starts[j - 1]):
+                            offset = (end - self.starts[j - 1] + 1) * 6 - 1
+                        else:
+                            offset = self.max_offset.get(self.starts[j - 1])
                         return scores + self.get_scores(start_offset, offset)
             else:
                 return None
@@ -156,6 +166,8 @@ class WigLister:
         return self.chroms
 
     def map(self, chrom, start, end, partial=False):
+        assert start < end, 'Start must be lower than end.'
+
         return self.wig_data_list.get(chrom).map(start, end, partial)
 
 
@@ -183,14 +195,15 @@ def parse(fi, score_filepath, partial=False):
             chr_name = data[1]
             chr_start = int(data[2])
             chr_end = int(data[3])
-
         except ValueError:
             return None, file_lineno
-
         except IndexError:
             return None, file_lineno
-
         else:
+            if chr_start >= chr_end:
+                # Start must be lower than end
+                return None, file_lineno
+
             if chr_name in score_data.get_chroms():
                 scores = score_data.map(chr_name, chr_start, chr_end, partial)
 
@@ -266,7 +279,7 @@ def main(argvs):
                     print('No score data is found: ' + seq_name)
                     continue
                 else:
-                    assert len(scores) == chr_end - chr_start + 1, 'Fetching error!'
+                    # assert len(scores) == chr_end - chr_start + 1, 'Fetching error!'
 
                     score_avg = round(sum(scores) / len(scores), 3)
                     fo.write(seq_name + '\t' + str(score_avg) + '\n')
