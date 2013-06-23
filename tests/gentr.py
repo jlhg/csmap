@@ -30,7 +30,7 @@ scores_1 = []
 for i in range(10):
     s = round(random(), 3)
     scores_1.append(s)
-    fo_tr.write(str(s))
+    fo_tr.write('{:.3f}'.format(s))
     fo_tr.write('\n')
 
 # Array 2
@@ -39,7 +39,7 @@ scores_2 = []
 for i in range(10):
     s = round(random(), 3)
     scores_2.append(s)
-    fo_tr.write(str(s))
+    fo_tr.write('{:.3f}'.format(s))
     fo_tr.write('\n')
 
 # Array 3
@@ -48,7 +48,7 @@ scores_3 = []
 for i in range(10):
     s = round(random(), 3)
     scores_3.append(s)
-    fo_tr.write(str(s))
+    fo_tr.write('{:.3f}'.format(s))
     fo_tr.write('\n')
 
 # Array 4
@@ -57,7 +57,7 @@ scores_4 = []
 for i in range(10):
     s = round(random(), 3)
     scores_4.append(s)
-    fo_tr.write(str(s))
+    fo_tr.write('{:.3f}'.format(s))
     fo_tr.write('\n')
 
 # Array 5
@@ -66,7 +66,7 @@ scores_5 = []
 for i in range(10):
     s = round(random(), 3)
     scores_5.append(s)
-    fo_tr.write(str(s))
+    fo_tr.write('{:.3f}'.format(s))
     fo_tr.write('\n')
 
 fo_tr.flush()
