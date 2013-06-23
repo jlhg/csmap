@@ -123,7 +123,7 @@ fo_st.flush()
 
 # Test Requirement 5: Array1: 2-13
 trscores = []
-for i, s in enumerate(scores_2):
+for i, s in enumerate(scores_1):
     if 2 <= i + 1 <= 10:
         trscores.append(s)
 
