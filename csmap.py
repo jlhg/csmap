@@ -126,7 +126,7 @@ class WigData:
                         if (end - self.starts[j - 1] + 1) * 6 < self.max_offset.get(self.starts[j - 1]):
                             offset = (end - self.starts[j - 1] + 1) * 6 - 1
                         else:
-                            offset = self.max_offset.get(self.starts[j - 1])
+                            offset = self.max_offset.get(self.starts[j - 1]) - 1
                         return scores + self.get_scores(start_offset, offset)
             else:
                 return None
